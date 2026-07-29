@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../data/auth_repository.dart';
+import 'package:provider/provider.dart';
+import '../../logic/auth_provider.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/app_button.dart';
 
@@ -11,36 +12,15 @@ class RegisterScreen extends StatefulWidget {
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _authRepository = AuthRepository();
-
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
 
-  bool _isLoading = false;
-  String? _errorMessage;
-
   Future<void> _handleRegister() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      await _authRepository.register(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
-      // Navigation after success will be wired up once go_router
-      // is introduced in Phase 5. For now, we just stop loading.
-    } catch (e) {
-      setState(() {
-        _errorMessage = 'Registration failed. Please try again.';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.register(
+      email: _emailController.text.trim(),
+      password: _passwordController.text.trim(),
+    );
   }
 
   @override
@@ -52,6 +32,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = context.watch<AuthProvider>();
+
     return Scaffold(
       appBar: AppBar(title: const Text('Register')),
       body: Padding(
@@ -67,15 +49,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
               obscureText: true,
             ),
             const SizedBox(height: 20),
-            if (_errorMessage != null)
+            if (authProvider.errorMessage != null)
               Text(
-                _errorMessage!,
+                authProvider.errorMessage!,
                 style: const TextStyle(color: Colors.red),
               ),
             const SizedBox(height: 12),
             AppButton(
               label: 'Register',
-              isLoading: _isLoading,
+              isLoading: authProvider.isLoading,
               onPressed: _handleRegister,
             ),
           ],

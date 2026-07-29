@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'config/supabase_config.dart';
+import 'features/auth/logic/auth_provider.dart';
 import 'features/auth/presentation/screens/home_screen.dart';
 
 Future<void> main() async {
@@ -14,8 +16,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  MaterialApp(
-      home: HomeScreen(), // Temporary placeholder for the logged-in area of the app.
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => AuthProvider()),
+      ],
+      child: MaterialApp(
+        home: const HomeScreen(),
+      ),
     );
   }
 }

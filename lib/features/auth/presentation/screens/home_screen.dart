@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
-import '../../data/auth_repository.dart';
+import 'package:provider/provider.dart';
+import '../../logic/auth_provider.dart';
 
 /// Temporary placeholder for the logged-in area of the app.
 /// Will eventually be replaced/expanded once Posts (Phase 7) exist.
 class HomeScreen extends StatelessWidget {
-  HomeScreen({super.key});
-
-  final _authRepository = AuthRepository();
+  const HomeScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,9 +15,8 @@ class HomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await _authRepository.logout();
-              debugPrint('Current user after logout: ${_authRepository.currentUser}');
+            onPressed: () {
+              context.read<AuthProvider>().logout();
             },
           ),
         ],
