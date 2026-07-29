@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
     return const MaterialApp(
       home: Scaffold(
         body: Center(
-          child: Text('Supabase connected ✅'),
+          child: Text('Supabase connected'),
         ),
       ),
     );

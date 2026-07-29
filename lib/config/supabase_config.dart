@@ -13,7 +13,7 @@ class SupabaseConfig {
 
     await Supabase.initialize(
       url: dotenv.env['SUPABASE_URL']!,
-      anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
+      publishableKey: dotenv.env['SUPABASE_PUBLISHABLE_KEY']!,
     );
   }
 }
