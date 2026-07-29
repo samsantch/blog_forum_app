@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'config/supabase_config.dart';
+import 'features/auth/presentation/screens/home_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,12 +14,8 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(
-        body: Center(
-          child: Text('Supabase connected'),
-        ),
-      ),
+    return  MaterialApp(
+      home: HomeScreen(), // Temporary placeholder for the logged-in area of the app.
     );
   }
 }
