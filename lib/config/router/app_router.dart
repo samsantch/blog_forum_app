@@ -1,0 +1,37 @@
+import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
+import '../../features/auth/logic/auth_provider.dart';
+import '../../features/auth/presentation/screens/login_screen.dart';
+import '../../features/auth/presentation/screens/register_screen.dart';
+import '../../features/auth/presentation/screens/home_screen.dart';
+
+class AppRouter {
+  final AuthProvider authProvider;
+
+  AppRouter(this.authProvider);
+
+  late final GoRouter router = GoRouter(
+    initialLocation: '/login',
+    refreshListenable: authProvider,
+    redirect: (context, state) {
+      final isLoggedIn = authProvider.currentUser != null;
+      final isGoingToAuthScreen = state.matchedLocation == '/login' ||
+          state.matchedLocation == '/register';
+
+      if (!isLoggedIn && !isGoingToAuthScreen) {
+        return '/login';
+      }
+
+      if (isLoggedIn && isGoingToAuthScreen) {
+        return '/home';
+      }
+
+      return null;
+    },
+    routes: [
+      GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+      GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
+      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
+    ],
+  );
+}

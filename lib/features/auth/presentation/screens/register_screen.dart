@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../logic/auth_provider.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/app_button.dart';
+import 'package:go_router/go_router.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -59,6 +60,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
               label: 'Register',
               isLoading: authProvider.isLoading,
               onPressed: _handleRegister,
+            ),
+            const SizedBox(height: 8),
+
+            TextButton(
+              onPressed: () => context.go('/login'),
+              child: const Text('Already have an account? Login'),
             ),
           ],
         ),
