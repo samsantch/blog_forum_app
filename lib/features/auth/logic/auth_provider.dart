@@ -1,9 +1,11 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../data/auth_repository.dart';
+import '../../profile/data/profile_repository.dart';
 
 class AuthProvider extends ChangeNotifier {
   final AuthRepository _authRepository = AuthRepository();
+  final ProfileRepository _profileRepository = ProfileRepository();
 
   User? _currentUser;
   bool _isLoading = false;
@@ -47,6 +49,10 @@ class AuthProvider extends ChangeNotifier {
     try {
       await _authRepository.register(email: email, password: password);
       _currentUser = _authRepository.currentUser;
+
+      if (_currentUser != null) {
+        await _profileRepository.createProfile(userId: _currentUser!.id);
+      }
     } catch (e) {
       _errorMessage = 'Registration failed. Please try again.';
     } finally {
