@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../logic/posts_provider.dart';
 
 class PostListScreen extends StatefulWidget {
@@ -40,6 +41,10 @@ class _PostListScreenState extends State<PostListScreen> {
                         );
                       },
                     ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => context.push('/posts/create'),
+        child: const Icon(Icons.add),
+      ),
     );
   }
 }
