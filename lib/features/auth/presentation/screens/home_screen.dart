@@ -3,8 +3,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../logic/auth_provider.dart';
 
-/// Temporary placeholder for the logged-in area of the app.
-/// Will eventually be replaced/expanded once Posts (Phase 7) exist.
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
