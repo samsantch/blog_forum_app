@@ -35,9 +35,8 @@ class _PostListScreenState extends State<PostListScreen> {
                         final post = postsProvider.posts[index];
                         return ListTile(
                           title: Text(post.title),
-                          subtitle: Text(
-                            post.authorUsername ?? 'Unknown author',
-                          ),
+                          subtitle: Text(post.authorUsername ?? 'Unknown author'),
+                          onTap: () => context.push('/posts/${post.id}'),
                         );
                       },
                     ),
