@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'config/supabase_config.dart';
 import 'config/router/app_router.dart';
 import 'features/auth/logic/auth_provider.dart';
+import 'features/posts/logic/posts_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
     return MultiProvider(
       providers: [
         ChangeNotifierProvider.value(value: _authProvider),
+        ChangeNotifierProvider(create: (_) => PostsProvider()),
       ],
       child: MaterialApp.router(
         routerConfig: _appRouter.router,
