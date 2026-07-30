@@ -32,6 +32,10 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
         actions: isAuthor
             ? [
                 IconButton(
+                  icon: const Icon(Icons.edit),
+                  onPressed: () => context.push('/posts/${post.id}/edit'),
+                ),
+                IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: () async {
                     final success = await context

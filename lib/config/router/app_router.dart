@@ -8,7 +8,7 @@ import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/posts/presentation/screens/post_list_screen.dart';
 import '../../features/posts/presentation/screens/create_post_screen.dart';
 import '../../features/posts/presentation/screens/post_detail_screen.dart';
-
+import '../../features/posts/presentation/screens/edit_post_screen.dart';
 
 class AppRouter {
   final AuthProvider authProvider;
@@ -45,6 +45,13 @@ class AppRouter {
         builder: (context, state) {
           final postId = state.pathParameters['postId']!;
           return PostDetailScreen(postId: postId);
+        },
+      ),
+      GoRoute(
+        path: '/posts/:postId/edit',
+        builder: (context, state) {
+          final postId = state.pathParameters['postId']!;
+          return EditPostScreen(postId: postId);
         },
       ),
     ],
