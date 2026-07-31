@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../data/profile_repository.dart';
 import '../../data/models/profile_model.dart';
 import '../../../auth/logic/auth_provider.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/app_button.dart';
+import '../../../../core/services/storage_service.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -15,6 +17,7 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final _profileRepository = ProfileRepository();
+  final _storageService = StorageService();
 
   final _usernameController = TextEditingController();
   final _bioController = TextEditingController();
@@ -22,6 +25,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   ProfileModel? _profile;
   bool _isLoading = true;
   bool _isSaving = false;
+  bool _isUploadingPhoto = false;
   String? _errorMessage;
 
   @override
@@ -76,6 +80,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _handleChangePhoto() async {
+    final userId = context.read<AuthProvider>().currentUser?.id;
+    if (userId == null) return;
+
+    final pickedFile = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 800,
+      imageQuality: 85,
+    );
+    if (pickedFile == null) return;
+
+    setState(() => _isUploadingPhoto = true);
+
+    try {
+      final fileBytes = await pickedFile.readAsBytes();
+      final fileExtension = pickedFile.path.split('.').last;
+
+      final avatarUrl = await _storageService.uploadFile(
+        bucket: 'avatars',
+        path: '$userId.$fileExtension',
+        fileBytes: fileBytes,
+        contentType: 'image/$fileExtension',
+      );
+
+      await _profileRepository.updateProfile(
+        userId: userId,
+        avatarUrl: avatarUrl,
+      );
+
+      await _loadProfile();
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Failed to upload photo.';
+      });
+    } finally {
+      setState(() => _isUploadingPhoto = false);
+    }
+  }
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -93,9 +136,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
-                  const CircleAvatar(
+                  CircleAvatar(
                     radius: 48,
-                    child: Icon(Icons.person, size: 48),
+                    backgroundImage: _profile?.avatarUrl != null
+                        ? NetworkImage(_profile!.avatarUrl!)
+                        : null,
+                    child: _profile?.avatarUrl == null
+                        ? const Icon(Icons.person, size: 48)
+                        : null,
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: _isUploadingPhoto ? null : _handleChangePhoto,
+                    child: _isUploadingPhoto
+                        ? const SizedBox(
+                            height: 16,
+                            width: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Text('Change Photo'),
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
