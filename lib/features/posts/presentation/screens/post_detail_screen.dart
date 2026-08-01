@@ -58,6 +58,28 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
             const SizedBox(height: 8),
             Text('by ${post.authorUsername ?? "Unknown"}'),
             const SizedBox(height: 16),
+            if (post.images.isNotEmpty)
+              SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: post.images.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          post.images[index].imageUrl,
+                          width: 280,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            const SizedBox(height: 16),
             Text(post.content),
           ],
         ),

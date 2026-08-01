@@ -1,3 +1,5 @@
+import 'post_image_model.dart';
+
 class PostModel {
   final String id;
   final String authorId;
@@ -6,6 +8,7 @@ class PostModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? authorUsername;
+  final List<PostImageModel> images;
 
   PostModel({
     required this.id,
@@ -15,6 +18,7 @@ class PostModel {
     required this.createdAt,
     required this.updatedAt,
     this.authorUsername,
+    this.images = const [],
   });
 
   factory PostModel.fromMap(Map<String, dynamic> map) {
@@ -28,6 +32,11 @@ class PostModel {
       authorUsername: map['profiles'] != null
           ? map['profiles']['username'] as String?
           : null,
+      images: map['post_images'] != null
+          ? (map['post_images'] as List)
+              .map((img) => PostImageModel.fromMap(img))
+              .toList()
+          : [],
     );
   }
 }

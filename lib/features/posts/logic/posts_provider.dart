@@ -1,9 +1,14 @@
 import 'package:flutter/foundation.dart';
 import '../data/post_repository.dart';
 import '../data/models/post_model.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../core/services/storage_service.dart';
+
 
 class PostsProvider extends ChangeNotifier {
   final PostRepository _postRepository = PostRepository();
+  final StorageService _storageService = StorageService();
+
 
   List<PostModel> _posts = [];
   bool _isLoading = false;
@@ -14,6 +19,7 @@ class PostsProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   bool get isSubmitting => _isSubmitting;
   String? get errorMessage => _errorMessage;
+
 
   Future<void> loadPosts() async {
     _isLoading = true;
@@ -34,6 +40,7 @@ class PostsProvider extends ChangeNotifier {
     required String authorId,
     required String title,
     required String content,
+    List<XFile> images = const [],
   }) async {
     _isSubmitting = true;
     _errorMessage = null;
@@ -45,7 +52,28 @@ class PostsProvider extends ChangeNotifier {
         title: title,
         content: content,
       );
-      _posts.insert(0, newPost);
+
+      for (final image in images) {
+        final fileBytes = await image.readAsBytes();
+        final fileExtension = image.path.split('.').last;
+        final path =
+            '${newPost.id}/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+
+        final imageUrl = await _storageService.uploadFile(
+          bucket: 'post-images',
+          path: path,
+          fileBytes: fileBytes,
+          contentType: 'image/$fileExtension',
+        );
+
+        await _postRepository.addPostImage(
+          postId: newPost.id,
+          imageUrl: imageUrl,
+        );
+      }
+
+      final fullPost = await _postRepository.getPostById(postId: newPost.id);
+      _posts.insert(0, fullPost);
       return true;
     } catch (e) {
       _errorMessage = 'Failed to create post.';

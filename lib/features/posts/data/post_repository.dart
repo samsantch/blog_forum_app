@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'models/post_model.dart';
+import 'models/post_image_model.dart';
 
 class PostRepository {
   final SupabaseClient _supabaseClient = Supabase.instance.client;
@@ -25,7 +26,7 @@ class PostRepository {
   Future<List<PostModel>> getPosts() async {
     final response = await _supabaseClient
         .from('posts')
-        .select('*, profiles(username, avatar_url)')
+        .select('*, profiles(username, avatar_url), post_images(id, post_id, image_url)')
         .order('created_at', ascending: false);
 
     return (response as List)
@@ -36,7 +37,7 @@ class PostRepository {
   Future<PostModel> getPostById({required String postId}) async {
     final response = await _supabaseClient
         .from('posts')
-        .select('*, profiles(username, avatar_url)')
+        .select('*, profiles(username, avatar_url), post_images(id, post_id, image_url)')
         .eq('id', postId)
         .single();
 
@@ -60,5 +61,21 @@ class PostRepository {
 
   Future<void> deletePost({required String postId}) async {
     await _supabaseClient.from('posts').delete().eq('id', postId);
+  }
+
+  Future<PostImageModel> addPostImage({
+    required String postId,
+    required String imageUrl,
+  }) async {
+    final response = await _supabaseClient
+        .from('post_images')
+        .insert({
+          'post_id': postId,
+          'image_url': imageUrl,
+        })
+        .select()
+        .single();
+
+    return PostImageModel.fromMap(response);
   }
 }
