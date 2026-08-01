@@ -5,7 +5,7 @@ import 'config/router/app_router.dart';
 import 'features/auth/logic/auth_provider.dart';
 import 'features/posts/logic/posts_provider.dart';
 import 'features/comments/logic/comments_provider.dart';
-
+import 'core/theme/app_theme.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await SupabaseConfig.initialize();
@@ -28,6 +28,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => CommentsProvider()),
       ],
       child: MaterialApp.router(
+        theme: AppTheme.light,
         routerConfig: _appRouter.router,
       ),
     );
