@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../logic/posts_provider.dart';
+import '../../../../core/widgets/app_state_message.dart';
+
 
 class PostListScreen extends StatefulWidget {
   const PostListScreen({super.key});
@@ -45,9 +47,19 @@ class _PostListScreenState extends State<PostListScreen> {
       body: postsProvider.isLoading
           ? const Center(child: CircularProgressIndicator())
           : postsProvider.errorMessage != null
-              ? Center(child: Text(postsProvider.errorMessage!))
+              ? AppStateMessage(
+                  icon: Icons.error_outline,
+                  message: postsProvider.errorMessage!,
+                  actionLabel: 'Retry',
+                  onAction: () => context.read<PostsProvider>().loadPosts(),
+                )
               : postsProvider.posts.isEmpty
-                  ? const Center(child: Text('No posts yet.'))
+                  ? AppStateMessage(
+                      icon: Icons.article_outlined,
+                      message: 'No posts yet. Be the first to share something!',
+                      actionLabel: 'Create Post',
+                      onAction: () => context.push('/posts/create'),
+                    )
                   : ListView.builder(
                       controller: _scrollController,
                       itemCount: postsProvider.posts.length +

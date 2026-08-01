@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../logic/comments_provider.dart';
 import '../../../auth/logic/auth_provider.dart';
 import 'comment_tile.dart';
+import '../../../../core/widgets/app_state_message.dart';
 
 class CommentSection extends StatefulWidget {
   final String postId;
@@ -80,8 +81,20 @@ class _CommentSectionState extends State<CommentSection> {
         const SizedBox(height: 8),
         if (commentsProvider.isLoading)
           const Center(child: CircularProgressIndicator())
+        else if (commentsProvider.errorMessage != null)
+          AppStateMessage(
+            icon: Icons.error_outline,
+            message: commentsProvider.errorMessage!,
+            actionLabel: 'Retry',
+            onAction: () => context
+                .read<CommentsProvider>()
+                .loadComments(postId: widget.postId),
+          )
         else if (commentsProvider.comments.isEmpty)
-          const Text('No comments yet.')
+          const AppStateMessage(
+            icon: Icons.chat_bubble_outline,
+            message: 'No comments yet. Start the conversation!',
+          )
         else
           Column(
             children: commentsProvider.comments.map((comment) {
