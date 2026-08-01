@@ -34,8 +34,21 @@ class _PostListScreenState extends State<PostListScreen> {
                       itemBuilder: (context, index) {
                         final post = postsProvider.posts[index];
                         return ListTile(
+                          leading: post.images.isNotEmpty
+                              ? ClipRRect(
+                                  borderRadius: BorderRadius.circular(4),
+                                  child: Image.network(
+                                    post.images.first.imageUrl,
+                                    width: 56,
+                                    height: 56,
+                                    fit: BoxFit.cover,
+                                  ),
+                                )
+                              : null,
                           title: Text(post.title),
-                          subtitle: Text(post.authorUsername ?? 'Unknown author'),
+                          subtitle: Text(
+                            post.authorUsername ?? 'Unknown author',
+                          ),
                           onTap: () => context.push('/posts/${post.id}'),
                         );
                       },

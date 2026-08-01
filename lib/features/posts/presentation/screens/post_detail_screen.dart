@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import '../../logic/posts_provider.dart';
 import '../../data/models/post_model.dart';
 import '../../../auth/logic/auth_provider.dart';
+import '../../../comments/presentation/widgets/comment_section.dart';
 
 class PostDetailScreen extends StatefulWidget {
   final String postId;
@@ -49,7 +50,7 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               ]
             : null,
       ),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -81,6 +82,9 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
               ),
             const SizedBox(height: 16),
             Text(post.content),
+            const SizedBox(height: 24),
+            const Divider(),
+            CommentSection(postId: post.id),
           ],
         ),
       ),
