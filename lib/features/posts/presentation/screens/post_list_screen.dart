@@ -11,10 +11,29 @@ class PostListScreen extends StatefulWidget {
 }
 
 class _PostListScreenState extends State<PostListScreen> {
+  final _scrollController = ScrollController();
+
   @override
   void initState() {
     super.initState();
-    context.read<PostsProvider>().loadPosts();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PostsProvider>().loadPosts();
+    });
+    _scrollController.addListener(_onScroll);
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      context.read<PostsProvider>().loadMorePosts();
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -30,8 +49,16 @@ class _PostListScreenState extends State<PostListScreen> {
               : postsProvider.posts.isEmpty
                   ? const Center(child: Text('No posts yet.'))
                   : ListView.builder(
-                      itemCount: postsProvider.posts.length,
+                      controller: _scrollController,
+                      itemCount: postsProvider.posts.length +
+                          (postsProvider.hasMore ? 1 : 0),
                       itemBuilder: (context, index) {
+                        if (index >= postsProvider.posts.length) {
+                          return const Padding(
+                            padding: EdgeInsets.all(16),
+                            child: Center(child: CircularProgressIndicator()),
+                          );
+                        }
                         final post = postsProvider.posts[index];
                         return ListTile(
                           leading: post.images.isNotEmpty
@@ -46,9 +73,8 @@ class _PostListScreenState extends State<PostListScreen> {
                                 )
                               : null,
                           title: Text(post.title),
-                          subtitle: Text(
-                            post.authorUsername ?? 'Unknown author',
-                          ),
+                          subtitle:
+                              Text(post.authorUsername ?? 'Unknown author'),
                           onTap: () => context.push('/posts/${post.id}'),
                         );
                       },

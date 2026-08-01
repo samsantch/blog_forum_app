@@ -20,18 +20,52 @@ class PostsProvider extends ChangeNotifier {
   bool get isSubmitting => _isSubmitting;
   String? get errorMessage => _errorMessage;
 
+  static const int _pageSize = 10;
+  int _currentPage = 0;
+  bool _hasMore = true;
+  bool _isLoadingMore = false;
+
+  bool get hasMore => _hasMore;
+  bool get isLoadingMore => _isLoadingMore;
 
   Future<void> loadPosts() async {
     _isLoading = true;
     _errorMessage = null;
+    _currentPage = 0;
+    _hasMore = true;
     notifyListeners();
 
     try {
-      _posts = await _postRepository.getPosts();
+      final firstPage =
+          await _postRepository.getPosts(page: 0, pageSize: _pageSize);
+      _posts = firstPage;
+      _hasMore = firstPage.length == _pageSize;
     } catch (e) {
       _errorMessage = 'Failed to load posts.';
     } finally {
       _isLoading = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadMorePosts() async {
+    if (_isLoadingMore || !_hasMore) return;
+
+    _isLoadingMore = true;
+    notifyListeners();
+
+    try {
+      _currentPage++;
+      final nextPage = await _postRepository.getPosts(
+        page: _currentPage,
+        pageSize: _pageSize,
+      );
+      _posts.addAll(nextPage);
+      _hasMore = nextPage.length == _pageSize;
+    } catch (e) {
+      _errorMessage = 'Failed to load more posts.';
+    } finally {
+      _isLoadingMore = false;
       notifyListeners();
     }
   }

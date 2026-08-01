@@ -23,11 +23,18 @@ class PostRepository {
     return PostModel.fromMap(response);
   }
 
-  Future<List<PostModel>> getPosts() async {
+  Future<List<PostModel>> getPosts({
+    required int page,
+    int pageSize = 10,
+  }) async {
+    final from = page * pageSize;
+    final to = from + pageSize - 1;
+
     final response = await _supabaseClient
         .from('posts')
         .select('*, profiles(username, avatar_url), post_images(id, post_id, image_url)')
-        .order('created_at', ascending: false);
+        .order('created_at', ascending: false)
+        .range(from, to);
 
     return (response as List)
         .map((map) => PostModel.fromMap(map))

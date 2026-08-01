@@ -19,7 +19,9 @@ class _CommentSectionState extends State<CommentSection> {
   @override
   void initState() {
     super.initState();
-    context.read<CommentsProvider>().loadComments(postId: widget.postId);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CommentsProvider>().loadComments(postId: widget.postId);
+    });
   }
 
   Future<void> _handlePostComment() async {

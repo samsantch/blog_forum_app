@@ -3,12 +3,12 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/logic/auth_provider.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/register_screen.dart';
-import '../../features/auth/presentation/screens/home_screen.dart';
 import '../../features/profile/presentation/screens/profile_screen.dart';
 import '../../features/posts/presentation/screens/post_list_screen.dart';
 import '../../features/posts/presentation/screens/create_post_screen.dart';
 import '../../features/posts/presentation/screens/post_detail_screen.dart';
 import '../../features/posts/presentation/screens/edit_post_screen.dart';
+import '../../features/shell/presentation/main_shell.dart';
 
 class AppRouter {
   final AuthProvider authProvider;
@@ -36,10 +36,10 @@ class AppRouter {
     routes: [
       GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
       GoRoute(path: '/register', builder: (context, state) => const RegisterScreen()),
-      GoRoute(path: '/home', builder: (context, state) => const HomeScreen()),
       GoRoute(path: '/profile', builder: (context, state) => const ProfileScreen()),
       GoRoute(path: '/posts', builder: (context, state) => const PostListScreen()),
       GoRoute(path: '/posts/create', builder: (context, state) => const CreatePostScreen()),
+      GoRoute(path: '/home', builder: (context, state) => const MainShell()),
       GoRoute(
         path: '/posts/:postId',
         builder: (context, state) {
