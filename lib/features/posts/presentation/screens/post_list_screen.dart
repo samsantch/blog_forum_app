@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../logic/posts_provider.dart';
 import '../../../../core/widgets/app_state_message.dart';
-
+import '../../../auth/logic/auth_provider.dart';
 
 class PostListScreen extends StatefulWidget {
   const PostListScreen({super.key});
@@ -96,8 +96,16 @@ class _PostListScreenState extends State<PostListScreen> {
                         );
                       },
                     ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/posts/create'),
+        floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          final isLoggedIn =
+              context.read<AuthProvider>().currentUser != null;
+          if (!isLoggedIn) {
+            context.push('/login');
+          } else {
+            context.push('/posts/create');
+          }
+        },
         child: const Icon(Icons.add),
       ),
     );

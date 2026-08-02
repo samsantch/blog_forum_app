@@ -4,6 +4,7 @@ import '../../logic/comments_provider.dart';
 import '../../../auth/logic/auth_provider.dart';
 import 'comment_tile.dart';
 import '../../../../core/widgets/app_state_message.dart';
+import 'package:go_router/go_router.dart';
 
 class CommentSection extends StatefulWidget {
   final String postId;
@@ -57,27 +58,34 @@ class _CommentSectionState extends State<CommentSection> {
       children: [
         Text('Comments', style: Theme.of(context).textTheme.titleMedium),
         const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _commentController,
-                decoration: const InputDecoration(hintText: 'Add a comment...'),
+        currentUserId == null
+            ? TextButton(
+                onPressed: () => context.push('/login'),
+                child: const Text('Log in to comment'),
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _commentController,
+                      decoration:
+                          const InputDecoration(hintText: 'Add a comment...'),
+                    ),
+                  ),
+                  IconButton(
+                    icon: commentsProvider.isSubmitting
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.send),
+                    onPressed: commentsProvider.isSubmitting
+                        ? null
+                        : _handlePostComment,
+                  ),
+                ],
               ),
-            ),
-            IconButton(
-              icon: commentsProvider.isSubmitting
-                  ? const SizedBox(
-                      width: 16,
-                      height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    )
-                  : const Icon(Icons.send),
-              onPressed:
-                  commentsProvider.isSubmitting ? null : _handlePostComment,
-            ),
-          ],
-        ),
         const SizedBox(height: 8),
         if (commentsProvider.isLoading)
           const Center(child: CircularProgressIndicator())

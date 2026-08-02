@@ -16,18 +16,20 @@ class AppRouter {
   AppRouter(this.authProvider);
 
   late final GoRouter router = GoRouter(
-    initialLocation: '/login',
+    initialLocation: '/home',
     refreshListenable: authProvider,
     redirect: (context, state) {
       final isLoggedIn = authProvider.currentUser != null;
-      final isGoingToAuthScreen = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/register';
+      final path = state.matchedLocation;
 
-      if (!isLoggedIn && !isGoingToAuthScreen) {
+      final isAuthScreen = path == '/login' || path == '/register';
+      final requiresAuth = path == '/posts/create' || path.endsWith('/edit');
+
+      if (!isLoggedIn && requiresAuth) {
         return '/login';
       }
 
-      if (isLoggedIn && isGoingToAuthScreen) {
+      if (isLoggedIn && isAuthScreen) {
         return '/home';
       }
 
