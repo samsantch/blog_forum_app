@@ -4,16 +4,20 @@ import '../data/auth_repository.dart';
 import '../../profile/data/profile_repository.dart';
 
 class AuthProvider extends ChangeNotifier {
-  final AuthRepository _authRepository = AuthRepository();
-  final ProfileRepository _profileRepository = ProfileRepository();
+  final AuthRepository _authRepository;
+  final ProfileRepository _profileRepository;
+
+  AuthProvider({
+    AuthRepository? authRepository,
+    ProfileRepository? profileRepository,
+  })  : _authRepository = authRepository ?? AuthRepository(),
+        _profileRepository = profileRepository ?? ProfileRepository() {
+    _currentUser = _authRepository.currentUser;
+  }
 
   User? _currentUser;
   bool _isLoading = false;
   String? _errorMessage;
-
-  AuthProvider() {
-    _currentUser = _authRepository.currentUser;
-  }
 
   User? get currentUser => _currentUser;
   bool get isLoading => _isLoading;
