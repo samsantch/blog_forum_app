@@ -1,9 +1,12 @@
 import 'package:flutter/foundation.dart';
+import 'package:image_picker/image_picker.dart';
 import '../data/comment_repository.dart';
 import '../data/models/comment_model.dart';
+import '../../../core/services/storage_service.dart';
 
 class CommentsProvider extends ChangeNotifier {
   final CommentRepository _commentRepository = CommentRepository();
+  final StorageService _storageService = StorageService();
 
   List<CommentModel> _comments = [];
   bool _isLoading = false;
@@ -34,6 +37,7 @@ class CommentsProvider extends ChangeNotifier {
     required String postId,
     required String authorId,
     required String content,
+    List<XFile> images = const [],
   }) async {
     _isSubmitting = true;
     _errorMessage = null;
@@ -45,7 +49,31 @@ class CommentsProvider extends ChangeNotifier {
         authorId: authorId,
         content: content,
       );
-      _comments.add(newComment);
+
+      for (final image in images) {
+        final fileBytes = await image.readAsBytes();
+        final fileExtension = image.path.split('.').last;
+        final path =
+            '${newComment.id}/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+
+        final imageUrl = await _storageService.uploadFile(
+          bucket: 'comment-images',
+          path: path,
+          fileBytes: fileBytes,
+          contentType: 'image/$fileExtension',
+        );
+
+        await _commentRepository.addCommentImage(
+          commentId: newComment.id,
+          imageUrl: imageUrl,
+        );
+      }
+
+      final fullComment = images.isEmpty
+          ? newComment
+          : await _commentRepository.getCommentById(commentId: newComment.id);
+
+      _comments.add(fullComment);
       return true;
     } catch (e) {
       _errorMessage = 'Failed to add comment.';
@@ -98,6 +126,27 @@ class CommentsProvider extends ChangeNotifier {
     } finally {
       _isSubmitting = false;
       notifyListeners();
+    }
+  }
+
+  Future<bool> deleteCommentImage({
+    required String commentId,
+    required String imageId,
+  }) async {
+    try {
+      await _commentRepository.deleteCommentImage(imageId: imageId);
+      final updatedComment =
+          await _commentRepository.getCommentById(commentId: commentId);
+      final index = _comments.indexWhere((c) => c.id == commentId);
+      if (index != -1) {
+        _comments[index] = updatedComment;
+      }
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to delete image.';
+      notifyListeners();
+      return false;
     }
   }
 }

@@ -49,13 +49,69 @@ class _CommentTileState extends State<CommentTile> {
         );
   }
 
+  Future<void> _handleDeleteImage(String imageId) async {
+    await context.read<CommentsProvider>().deleteCommentImage(
+          commentId: widget.comment.id,
+          imageId: imageId,
+        );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(widget.comment.authorUsername ?? 'Unknown'),
-      subtitle: _isEditing
-          ? TextField(controller: _editController, autofocus: true)
-          : Text(widget.comment.content),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _isEditing
+              ? TextField(controller: _editController, autofocus: true)
+              : Text(widget.comment.content),
+          if (widget.comment.images.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: SizedBox(
+                height: 60,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: widget.comment.images.length,
+                  itemBuilder: (context, index) {
+                    final image = widget.comment.images[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.network(
+                              image.imageUrl,
+                              width: 60,
+                              height: 60,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          if (widget.isAuthor)
+                            Positioned(
+                              top: 0,
+                              right: 0,
+                              child: GestureDetector(
+                                onTap: () => _handleDeleteImage(image.id),
+                                child: const CircleAvatar(
+                                  radius: 10,
+                                  backgroundColor: Colors.black54,
+                                  child: Icon(Icons.close,
+                                      size: 12, color: Colors.white),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+        ],
+      ),
       trailing: !widget.isAuthor
           ? null
           : _isEditing

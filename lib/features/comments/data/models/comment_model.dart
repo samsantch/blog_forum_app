@@ -1,3 +1,5 @@
+import 'comment_image_model.dart';
+
 class CommentModel {
   final String id;
   final String postId;
@@ -6,6 +8,7 @@ class CommentModel {
   final DateTime createdAt;
   final DateTime updatedAt;
   final String? authorUsername;
+  final List<CommentImageModel> images;
 
   CommentModel({
     required this.id,
@@ -15,6 +18,7 @@ class CommentModel {
     required this.createdAt,
     required this.updatedAt,
     this.authorUsername,
+    this.images = const [],
   });
 
   factory CommentModel.fromMap(Map<String, dynamic> map) {
@@ -28,6 +32,11 @@ class CommentModel {
       authorUsername: map['profiles'] != null
           ? map['profiles']['username'] as String?
           : null,
+      images: map['comment_images'] != null
+          ? (map['comment_images'] as List)
+              .map((img) => CommentImageModel.fromMap(img))
+              .toList()
+          : [],
     );
   }
 }
