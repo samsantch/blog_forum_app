@@ -1,6 +1,8 @@
+import 'dart:typed_data';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../logic/posts_provider.dart';
 import '../../data/models/post_model.dart';
 import '../../../../core/widgets/app_text_field.dart';
@@ -18,25 +20,54 @@ class EditPostScreen extends StatefulWidget {
 class _EditPostScreenState extends State<EditPostScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
+  List<XFile> _newImages = [];
 
   @override
   void initState() {
     super.initState();
-    final post = context.read<PostsProvider>().selectedPost!;
+    final post =
+        context.read<PostsProvider>().posts.firstWhere((p) => p.id == widget.postId,
+            orElse: () => context.read<PostsProvider>().selectedPost!);
+
     _titleController = TextEditingController(text: post.title);
     _contentController = TextEditingController(text: post.content);
   }
 
-  Future<void> _handleSave() async {
-    final success = await context.read<PostsProvider>().updatePost(
-          postId: widget.postId,
-          title: _titleController.text.trim(),
-          content: _contentController.text.trim(),
-        );
-
-    if (success && mounted) {
-      context.pop();
+  Future<void> _pickImages() async {
+    final pickedFiles = await ImagePicker().pickMultiImage(
+      maxWidth: 1200,
+      imageQuality: 85,
+    );
+    if (pickedFiles.isNotEmpty) {
+      setState(() => _newImages = pickedFiles);
     }
+  }
+
+  Future<void> _handleDeleteExistingImage(String imageId) async {
+    await context.read<PostsProvider>().deletePostImage(
+          postId: widget.postId,
+          imageId: imageId,
+        );
+  }
+
+  Future<void> _handleSave() async {
+    final postsProvider = context.read<PostsProvider>();
+
+    final success = await postsProvider.updatePost(
+      postId: widget.postId,
+      title: _titleController.text.trim(),
+      content: _contentController.text.trim(),
+    );
+    if (!success) return;
+
+    if (_newImages.isNotEmpty) {
+      await postsProvider.addImagesToPost(
+        postId: widget.postId,
+        images: _newImages,
+      );
+    }
+
+    if (mounted) context.pop();
   }
 
   @override
@@ -49,22 +80,119 @@ class _EditPostScreenState extends State<EditPostScreen> {
   @override
   Widget build(BuildContext context) {
     final postsProvider = context.watch<PostsProvider>();
+    final post = postsProvider.posts.firstWhere(
+      (p) => p.id == widget.postId,
+      orElse: () => postsProvider.selectedPost!,
+    );
 
     return Scaffold(
       appBar: AppBar(title: const Text('Edit Post')),
-      body: Padding(
+      body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             AppTextField(controller: _titleController, label: 'Title'),
             const SizedBox(height: 12),
             AppTextField(controller: _contentController, label: 'Content'),
+            const SizedBox(height: 16),
+
+            if (post.images.isNotEmpty) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text('Existing images',
+                    style: Theme.of(context).textTheme.labelLarge),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 90,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: post.images.length,
+                  itemBuilder: (context, index) {
+                    final image = post.images[index];
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: Stack(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              image.imageUrl,
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                          Positioned(
+                            top: 2,
+                            right: 2,
+                            child: GestureDetector(
+                              onTap: () =>
+                                  _handleDeleteExistingImage(image.id),
+                              child: const CircleAvatar(
+                                radius: 12,
+                                backgroundColor: Colors.black54,
+                                child: Icon(Icons.close,
+                                    size: 14, color: Colors.white),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: _pickImages,
+                icon: const Icon(Icons.add_photo_alternate_outlined),
+                label: const Text('Add Images'),
+              ),
+            ),
+            if (_newImages.isNotEmpty)
+              SizedBox(
+                height: 90,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _newImages.length,
+                  itemBuilder: (context, index) {
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: FutureBuilder<Uint8List>(
+                        future: _newImages[index].readAsBytes(),
+                        builder: (context, snapshot) {
+                          if (!snapshot.hasData) {
+                            return const SizedBox(
+                              width: 90,
+                              height: 90,
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+                          return ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.memory(
+                              snapshot.data!,
+                              width: 90,
+                              height: 90,
+                              fit: BoxFit.cover,
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+
             const SizedBox(height: 20),
             if (postsProvider.errorMessage != null)
-              Text(
-                postsProvider.errorMessage!,
-                style: const TextStyle(color: Colors.red),
-              ),
+              Text(postsProvider.errorMessage!,
+                  style: const TextStyle(color: Colors.red)),
             const SizedBox(height: 12),
             AppButton(
               label: 'Save',

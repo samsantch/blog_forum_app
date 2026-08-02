@@ -95,4 +95,8 @@ class PostRepository {
 
     return (response as List).map((map) => PostModel.fromMap(map)).toList();
   }
+
+  Future<void> deletePostImage({required String imageId}) async {
+    await _supabaseClient.from('post_images').delete().eq('id', imageId);
+  }
 }

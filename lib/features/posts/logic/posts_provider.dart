@@ -233,4 +233,69 @@ class PostsProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<bool> deletePostImage({
+    required String postId,
+    required String imageId,
+  }) async {
+    try {
+      await _postRepository.deletePostImage(imageId: imageId);
+      final updatedPost = await _postRepository.getPostById(postId: postId);
+      _syncPostEverywhere(updatedPost);
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to delete image.';
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> addImagesToPost({
+    required String postId,
+    required List<XFile> images,
+  }) async {
+    _isSubmitting = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      for (final image in images) {
+        final fileBytes = await image.readAsBytes();
+        final fileExtension = image.path.split('.').last;
+        final path =
+            '$postId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
+
+        final imageUrl = await _storageService.uploadFile(
+          bucket: 'post-images',
+          path: path,
+          fileBytes: fileBytes,
+          contentType: 'image/$fileExtension',
+        );
+
+        await _postRepository.addPostImage(postId: postId, imageUrl: imageUrl);
+      }
+
+      final updatedPost = await _postRepository.getPostById(postId: postId);
+      _syncPostEverywhere(updatedPost);
+      return true;
+    } catch (e) {
+      _errorMessage = 'Failed to add images.';
+      return false;
+    } finally {
+      _isSubmitting = false;
+      notifyListeners();
+    }
+  }
+
+  void _syncPostEverywhere(PostModel updatedPost) {
+    final index = _posts.indexWhere((p) => p.id == updatedPost.id);
+    if (index != -1) _posts[index] = updatedPost;
+
+    final myIndex = _myPosts.indexWhere((p) => p.id == updatedPost.id);
+    if (myIndex != -1) _myPosts[myIndex] = updatedPost;
+
+    if (_selectedPost?.id == updatedPost.id) _selectedPost = updatedPost;
+
+    notifyListeners();
+  }
 }
