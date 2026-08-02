@@ -7,6 +7,9 @@ import '../../../auth/logic/auth_provider.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/services/storage_service.dart';
+import '../../../posts/logic/posts_provider.dart';
+import '../../../../core/widgets/app_state_message.dart';
+import 'package:go_router/go_router.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -32,6 +35,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void initState() {
     super.initState();
     _loadProfile();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userId = context.read<AuthProvider>().currentUser?.id;
+      if (userId != null) {
+        context.read<PostsProvider>().loadMyPosts(authorId: userId);
+      }
+    });
   }
 
   Future<void> _loadProfile() async {
@@ -126,6 +135,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
+  Widget _buildMyPosts(BuildContext context) {
+    final postsProvider = context.watch<PostsProvider>();
+
+    if (postsProvider.isLoadingMyPosts) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 24),
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (postsProvider.myPostsError != null) {
+      return AppStateMessage(
+        icon: Icons.error_outline,
+        message: postsProvider.myPostsError!,
+      );
+    }
+
+    if (postsProvider.myPosts.isEmpty) {
+      return const AppStateMessage(
+        icon: Icons.article_outlined,
+        message: "You haven't posted anything yet.",
+      );
+    }
+
+    return Column(
+      children: postsProvider.myPosts.map((post) {
+        return Card(
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          child: ListTile(
+            leading: post.images.isNotEmpty
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(4),
+                    child: Image.network(
+                      post.images.first.imageUrl,
+                      width: 56,
+                      height: 56,
+                      fit: BoxFit.cover,
+                    ),
+                  )
+                : null,
+            title: Text(post.title ?? 'Untitled'),
+            subtitle: Text(
+              post.content ?? '',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            onTap: () => context.push('/posts/${post.id}'),
+          ),
+        );
+      }).toList(),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -140,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : Padding(
+          : SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
@@ -154,15 +216,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         : null,
                   ),
                   const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: _isUploadingPhoto ? null : _handleChangePhoto,
-                    child: _isUploadingPhoto
-                        ? const SizedBox(
-                            height: 16,
-                            width: 16,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text('Change Photo'),
+                  AppButton(
+                    label: 'Change Photo',
+                    isLoading: _isUploadingPhoto,
+                    onPressed: _handleChangePhoto,
                   ),
                   const SizedBox(height: 16),
                   AppTextField(
@@ -186,6 +243,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     isLoading: _isSaving,
                     onPressed: _handleSave,
                   ),
+                  const SizedBox(height: 32),
+                  const Divider(),
+                  const SizedBox(height: 8),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'My Posts',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildMyPosts(context),
                 ],
               ),
             ),

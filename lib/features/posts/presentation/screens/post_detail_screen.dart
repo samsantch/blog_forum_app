@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import '../../logic/posts_provider.dart';
-import '../../data/models/post_model.dart';
 import '../../../auth/logic/auth_provider.dart';
+import '../../../../core/widgets/app_state_message.dart';
 import '../../../comments/presentation/widgets/comment_section.dart';
 
 class PostDetailScreen extends StatefulWidget {
@@ -17,13 +17,32 @@ class PostDetailScreen extends StatefulWidget {
 
 class _PostDetailScreenState extends State<PostDetailScreen> {
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<PostsProvider>().loadPostById(postId: widget.postId);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final postsProvider = context.watch<PostsProvider>();
     final currentUserId = context.watch<AuthProvider>().currentUser?.id;
 
-    final PostModel post = postsProvider.posts.firstWhere(
-      (p) => p.id == widget.postId,
-    );
+    if (postsProvider.isLoadingSelectedPost) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    final post = postsProvider.selectedPost;
+    if (post == null) {
+      return Scaffold(
+        appBar: AppBar(title: const Text('Post')),
+        body: AppStateMessage(
+          icon: Icons.error_outline,
+          message: postsProvider.selectedPostError ?? 'Post not found.',
+        ),
+      );
+    }
 
     final isAuthor = post.authorId == currentUserId;
 

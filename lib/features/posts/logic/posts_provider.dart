@@ -4,29 +4,55 @@ import '../data/models/post_model.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/services/storage_service.dart';
 
-
 class PostsProvider extends ChangeNotifier {
   final PostRepository _postRepository = PostRepository();
   final StorageService _storageService = StorageService();
 
-
+  // --- List State ---
   List<PostModel> _posts = [];
   bool _isLoading = false;
   bool _isSubmitting = false;
   String? _errorMessage;
 
-  List<PostModel> get posts => _posts;
-  bool get isLoading => _isLoading;
-  bool get isSubmitting => _isSubmitting;
-  String? get errorMessage => _errorMessage;
+  // --- My Posts State ---
+  List<PostModel> _myPosts = [];
+  bool _isLoadingMyPosts = false;
+  String? _myPostsError;
 
+  // --- Selected Post State ---
+  PostModel? _selectedPost;
+  bool _isLoadingSelectedPost = false;
+  String? _selectedPostError;
+
+  // --- Pagination State ---
   static const int _pageSize = 10;
   int _currentPage = 0;
   bool _hasMore = true;
   bool _isLoadingMore = false;
 
+  // --- List Getters ---
+  List<PostModel> get posts => _posts;
+  bool get isLoading => _isLoading;
+  bool get isSubmitting => _isSubmitting;
+  String? get errorMessage => _errorMessage;
+
+  // --- My Posts Getters ---
+  List<PostModel> get myPosts => _myPosts;
+  bool get isLoadingMyPosts => _isLoadingMyPosts;
+  String? get myPostsError => _myPostsError;
+
+  // --- Selected Post Getters ---
+  PostModel? get selectedPost => _selectedPost;
+  bool get isLoadingSelectedPost => _isLoadingSelectedPost;
+  String? get selectedPostError => _selectedPostError;
+
+  // --- Pagination Getters ---
   bool get hasMore => _hasMore;
   bool get isLoadingMore => _isLoadingMore;
+
+  // ==========================================
+  // METHODS
+  // ==========================================
 
   Future<void> loadPosts() async {
     _isLoading = true;
@@ -69,6 +95,36 @@ class PostsProvider extends ChangeNotifier {
       notifyListeners();
     }
   }
+  
+  Future<void> loadMyPosts({required String authorId}) async {
+    _isLoadingMyPosts = true;
+    _myPostsError = null;
+    notifyListeners();
+
+    try {
+      _myPosts = await _postRepository.getPostsByAuthor(authorId: authorId);
+    } catch (e) {
+      _myPostsError = 'Failed to load your posts.';
+    } finally {
+      _isLoadingMyPosts = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadPostById({required String postId}) async {
+    _isLoadingSelectedPost = true;
+    _selectedPostError = null;
+    notifyListeners();
+
+    try {
+      _selectedPost = await _postRepository.getPostById(postId: postId);
+    } catch (e) {
+      _selectedPostError = 'Failed to load post.';
+    } finally {
+      _isLoadingSelectedPost = false;
+      notifyListeners();
+    }
+  }
 
   Future<bool> createPost({
     required String authorId,
@@ -108,6 +164,7 @@ class PostsProvider extends ChangeNotifier {
 
       final fullPost = await _postRepository.getPostById(postId: newPost.id);
       _posts.insert(0, fullPost);
+      _myPosts.insert(0, fullPost);
       return true;
     } catch (e) {
       _errorMessage = 'Failed to create post.';
@@ -139,6 +196,14 @@ class PostsProvider extends ChangeNotifier {
       if (index != -1) {
         _posts[index] = updatedPost;
       }
+      if (_selectedPost?.id == postId) {
+        _selectedPost = updatedPost;
+      }
+
+      final myIndex = _myPosts.indexWhere((p) => p.id == postId);
+      if (myIndex != -1) {
+        _myPosts[myIndex] = updatedPost;
+      }
 
       return true;
     } catch (e) {
@@ -158,6 +223,7 @@ class PostsProvider extends ChangeNotifier {
     try {
       await _postRepository.deletePost(postId: postId);
       _posts.removeWhere((post) => post.id == postId);
+      _myPosts.removeWhere((post) => post.id == postId);
       return true;
     } catch (e) {
       _errorMessage = 'Failed to delete post.';

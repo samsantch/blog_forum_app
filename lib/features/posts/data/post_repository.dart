@@ -85,4 +85,14 @@ class PostRepository {
 
     return PostImageModel.fromMap(response);
   }
+
+  Future<List<PostModel>> getPostsByAuthor({required String authorId}) async {
+    final response = await _supabaseClient
+        .from('posts')
+        .select('*, profiles(username, avatar_url), post_images(id, post_id, image_url)')
+        .eq('author_id', authorId)
+        .order('created_at', ascending: false);
+
+    return (response as List).map((map) => PostModel.fromMap(map)).toList();
+  }
 }

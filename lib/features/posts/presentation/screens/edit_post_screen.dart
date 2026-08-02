@@ -22,11 +22,7 @@ class _EditPostScreenState extends State<EditPostScreen> {
   @override
   void initState() {
     super.initState();
-    final PostModel post = context
-        .read<PostsProvider>()
-        .posts
-        .firstWhere((p) => p.id == widget.postId);
-
+    final post = context.read<PostsProvider>().selectedPost!;
     _titleController = TextEditingController(text: post.title);
     _contentController = TextEditingController(text: post.content);
   }
