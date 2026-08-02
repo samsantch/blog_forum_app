@@ -29,6 +29,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   bool _isLoading = true;
   bool _isSaving = false;
   bool _isUploadingPhoto = false;
+  bool _isRemovingPhoto = false;
   String? _errorMessage;
 
   @override
@@ -128,6 +129,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _handleRemovePhoto() async {
+    final userId = context.read<AuthProvider>().currentUser?.id;
+    if (userId == null) return;
+
+    setState(() => _isRemovingPhoto = true);
+
+    try {
+      await _profileRepository.removeAvatar(userId: userId);
+      await _loadProfile();
+    } catch (e) {
+      setState(() => _errorMessage = 'Failed to remove photo.');
+    } finally {
+      setState(() => _isRemovingPhoto = false);
+    }
+  }
+
   @override
   void dispose() {
     _usernameController.dispose();
@@ -221,6 +238,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     isLoading: _isUploadingPhoto,
                     onPressed: _handleChangePhoto,
                   ),
+                  if (_profile?.avatarUrl != null)
+                    TextButton(
+                      onPressed:
+                          _isRemovingPhoto ? null : _handleRemovePhoto,
+                      child: _isRemovingPhoto
+                          ? const SizedBox(
+                              height: 16,
+                              width: 16,
+                              child:
+                                  CircularProgressIndicator(strokeWidth: 2),
+                            )
+                          : const Text('Remove Photo'),
+                    ),
                   const SizedBox(height: 16),
                   AppTextField(
                     controller: _usernameController,

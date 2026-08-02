@@ -60,41 +60,51 @@ class _PostListScreenState extends State<PostListScreen> {
                       actionLabel: 'Create Post',
                       onAction: () => context.push('/posts/create'),
                     )
-                  : ListView.builder(
-                      controller: _scrollController,
-                      itemCount: postsProvider.posts.length +
-                          (postsProvider.hasMore ? 1 : 0),
-                      itemBuilder: (context, index) {
-                        if (index >= postsProvider.posts.length) {
-                          return const Padding(
-                            padding: EdgeInsets.all(16),
-                            child: Center(child: CircularProgressIndicator()),
+                  : RefreshIndicator(
+                      onRefresh: () =>
+                          context.read<PostsProvider>().refreshPosts(),
+                      child: ListView.builder(
+                        controller: _scrollController,
+                        itemCount: postsProvider.posts.length +
+                            (postsProvider.hasMore ? 1 : 0),
+                        itemBuilder: (context, index) {
+                          if (index >= postsProvider.posts.length) {
+                            return const Padding(
+                              padding: EdgeInsets.all(16),
+                              child: Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          }
+
+                          final post = postsProvider.posts[index];
+
+                          return Card(
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
+                            ),
+                            child: ListTile(
+                              leading: post.images.isNotEmpty
+                                  ? ClipRRect(
+                                      borderRadius: BorderRadius.circular(4),
+                                      child: Image.network(
+                                        post.images.first.imageUrl,
+                                        width: 56,
+                                        height: 56,
+                                        fit: BoxFit.cover,
+                                      ),
+                                    )
+                                  : null,
+                              title: Text(post.title),
+                              subtitle: Text(
+                                post.authorUsername ?? 'Unknown author',
+                              ),
+                              onTap: () => context.push('/posts/${post.id}'),
+                            ),
                           );
-                        }
-                        final post = postsProvider.posts[index];
-                        // --- REPLACED CODE STARTS HERE ---
-                        return Card(
-                          margin: const EdgeInsets.symmetric(
-                              horizontal: 12, vertical: 6),
-                          child: ListTile(
-                            leading: post.images.isNotEmpty
-                                ? ClipRRect(
-                                    borderRadius: BorderRadius.circular(4),
-                                    child: Image.network(
-                                      post.images.first.imageUrl,
-                                      width: 56,
-                                      height: 56,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  )
-                                : null,
-                            title: Text(post.title),
-                            subtitle:
-                                Text(post.authorUsername ?? 'Unknown author'),
-                            onTap: () => context.push('/posts/${post.id}'),
-                          ),
-                        );
-                      },
+                        },
+                      ),
                     ),
         floatingActionButton: FloatingActionButton(
         onPressed: () {

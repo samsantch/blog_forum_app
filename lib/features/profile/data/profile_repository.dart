@@ -36,4 +36,11 @@ class ProfileRepository {
 
     await _supabaseClient.from('profiles').update(updates).eq('id', userId);
   }
+
+  Future<void> removeAvatar({required String userId}) async {
+    await _supabaseClient.from('profiles').update({
+      'avatar_url': null,
+      'updated_at': DateTime.now().toIso8601String(),
+    }).eq('id', userId);
+  }
 }

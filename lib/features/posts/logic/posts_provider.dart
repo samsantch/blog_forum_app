@@ -298,4 +298,21 @@ class PostsProvider extends ChangeNotifier {
 
     notifyListeners();
   }
+
+  Future<void> refreshPosts() async {
+    _errorMessage = null;
+    _currentPage = 0;
+    _hasMore = true;
+
+    try {
+      final firstPage =
+          await _postRepository.getPosts(page: 0, pageSize: _pageSize);
+      _posts = firstPage;
+      _hasMore = firstPage.length == _pageSize;
+    } catch (e) {
+      _errorMessage = 'Failed to refresh posts.';
+    } finally {
+      notifyListeners();
+    }
+  }
 }
