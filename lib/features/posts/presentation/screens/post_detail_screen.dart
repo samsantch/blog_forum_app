@@ -58,10 +58,37 @@ class _PostDetailScreenState extends State<PostDetailScreen> {
                 IconButton(
                   icon: const Icon(Icons.delete),
                   onPressed: () async {
+                    final shouldDelete = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Delete Post'),
+                        content: const Text(
+                          'Are you sure you want to delete this post?',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text('Cancel'),
+                          ),
+                          FilledButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: const Text('Delete'),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    if (shouldDelete != true) return;
+
                     final success = await context
                         .read<PostsProvider>()
                         .deletePost(postId: post.id);
+
                     if (success && context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('Post deleted successfully.')),
+                      );
+
                       context.pop();
                     }
                   },

@@ -179,6 +179,7 @@ class _CommentSectionState extends State<CommentSection> {
           Column(
             children: commentsProvider.comments.map((comment) {
               return CommentTile(
+                key: ValueKey(comment.id),
                 comment: comment,
                 isAuthor: comment.authorId == currentUserId,
               );

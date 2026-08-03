@@ -44,9 +44,39 @@ class _CommentTileState extends State<CommentTile> {
   }
 
   Future<void> _handleDelete() async {
-    await context.read<CommentsProvider>().deleteComment(
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Comment'),
+        content: const Text(
+          'Are you sure you want to delete this comment?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true) return;
+
+    final success = await context.read<CommentsProvider>().deleteComment(
           commentId: widget.comment.id,
         );
+
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Comment deleted.'),
+        ),
+      );
+    }
   }
 
   Future<void> _handleDeleteImage(String imageId) async {
@@ -89,7 +119,7 @@ class _CommentTileState extends State<CommentTile> {
                               fit: BoxFit.cover,
                             ),
                           ),
-                          if (widget.isAuthor)
+                          if (widget.isAuthor && _isEditing)
                             Positioned(
                               top: 0,
                               right: 0,
@@ -98,8 +128,11 @@ class _CommentTileState extends State<CommentTile> {
                                 child: const CircleAvatar(
                                   radius: 10,
                                   backgroundColor: Colors.black54,
-                                  child: Icon(Icons.close,
-                                      size: 12, color: Colors.white),
+                                  child: Icon(
+                                    Icons.close,
+                                    size: 12,
+                                    color: Colors.white,
+                                  ),
                                 ),
                               ),
                             ),
@@ -115,9 +148,23 @@ class _CommentTileState extends State<CommentTile> {
       trailing: !widget.isAuthor
           ? null
           : _isEditing
-              ? IconButton(
-                  icon: const Icon(Icons.check),
-                  onPressed: _handleSaveEdit,
+              ? Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.close, size: 18),
+                      onPressed: () {
+                        setState(() {
+                          _editController.text = widget.comment.content;
+                          _isEditing = false;
+                        });
+                      },
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.check, size: 18),
+                      onPressed: _handleSaveEdit,
+                    ),
+                  ],
                 )
               : Row(
                   mainAxisSize: MainAxisSize.min,
