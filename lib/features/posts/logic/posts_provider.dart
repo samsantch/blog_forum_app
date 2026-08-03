@@ -145,7 +145,7 @@ class PostsProvider extends ChangeNotifier {
 
       for (final image in images) {
         final fileBytes = await image.readAsBytes();
-        final fileExtension = image.path.split('.').last;
+        final fileExtension = StorageService.extensionOf(image);
         final path =
             '${newPost.id}/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
 
@@ -153,7 +153,7 @@ class PostsProvider extends ChangeNotifier {
           bucket: 'post-images',
           path: path,
           fileBytes: fileBytes,
-          contentType: 'image/$fileExtension',
+          contentType: StorageService.contentTypeOf(image),
         );
 
         await _postRepository.addPostImage(
@@ -261,7 +261,7 @@ class PostsProvider extends ChangeNotifier {
     try {
       for (final image in images) {
         final fileBytes = await image.readAsBytes();
-        final fileExtension = image.path.split('.').last;
+        final fileExtension = StorageService.extensionOf(image);
         final path =
             '$postId/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
 
@@ -269,7 +269,7 @@ class PostsProvider extends ChangeNotifier {
           bucket: 'post-images',
           path: path,
           fileBytes: fileBytes,
-          contentType: 'image/$fileExtension',
+          contentType: StorageService.contentTypeOf(image),
         );
 
         await _postRepository.addPostImage(postId: postId, imageUrl: imageUrl);

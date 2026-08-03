@@ -105,13 +105,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
     try {
       final fileBytes = await pickedFile.readAsBytes();
-      final fileExtension = pickedFile.path.split('.').last;
+      final fileExtension = StorageService.extensionOf(pickedFile);
 
       final avatarUrl = await _storageService.uploadFile(
         bucket: 'avatars',
         path: '$userId.$fileExtension',
         fileBytes: fileBytes,
-        contentType: 'image/$fileExtension',
+        contentType: StorageService.contentTypeOf(pickedFile),
       );
 
       await _profileRepository.updateProfile(

@@ -52,7 +52,7 @@ class CommentsProvider extends ChangeNotifier {
 
       for (final image in images) {
         final fileBytes = await image.readAsBytes();
-        final fileExtension = image.path.split('.').last;
+        final fileExtension = StorageService.extensionOf(image);
         final path =
             '${newComment.id}/${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
 
@@ -60,7 +60,7 @@ class CommentsProvider extends ChangeNotifier {
           bucket: 'comment-images',
           path: path,
           fileBytes: fileBytes,
-          contentType: 'image/$fileExtension',
+          contentType: StorageService.contentTypeOf(image),
         );
 
         await _commentRepository.addCommentImage(
