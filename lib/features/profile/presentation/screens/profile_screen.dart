@@ -130,18 +130,57 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _handleRemovePhoto() async {
+    final shouldRemove = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Remove Profile Photo'),
+        content: const Text(
+          'Are you sure you want to remove your profile photo?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Remove'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldRemove != true) return;
+
     final userId = context.read<AuthProvider>().currentUser?.id;
     if (userId == null) return;
 
-    setState(() => _isRemovingPhoto = true);
+    setState(() {
+      _isRemovingPhoto = true;
+      _errorMessage = null;
+    });
 
     try {
       await _profileRepository.removeAvatar(userId: userId);
       await _loadProfile();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Profile photo removed.'),
+          ),
+        );
+      }
     } catch (e) {
-      setState(() => _errorMessage = 'Failed to remove photo.');
+      setState(() {
+        _errorMessage = 'Failed to remove photo.';
+      });
     } finally {
-      setState(() => _isRemovingPhoto = false);
+      if (mounted) {
+        setState(() {
+          _isRemovingPhoto = false;
+        });
+      }
     }
   }
 
