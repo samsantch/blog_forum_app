@@ -9,7 +9,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 /// a feature's `data/` folder — never here, and never directly in UI.
 class SupabaseConfig {
   static Future<void> initialize() async {
-    await dotenv.load(fileName: '.env');
+    await dotenv.load(fileName: 'app.env');
 
     await Supabase.initialize(
       url: dotenv.env['SUPABASE_URL']!,
