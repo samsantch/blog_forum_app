@@ -25,9 +25,13 @@ class _PostListScreenState extends State<PostListScreen> {
   }
 
   void _onScroll() {
+    final postsProvider = context.read<PostsProvider>();
+
     if (_scrollController.position.pixels >=
-        _scrollController.position.maxScrollExtent - 200) {
-      context.read<PostsProvider>().loadMorePosts();
+            _scrollController.position.maxScrollExtent - 200 &&
+        !postsProvider.isLoadingMore &&
+        postsProvider.hasMore) {
+      postsProvider.loadMorePosts();
     }
   }
 
@@ -66,7 +70,7 @@ class _PostListScreenState extends State<PostListScreen> {
                       child: ListView.builder(
                         controller: _scrollController,
                         itemCount: postsProvider.posts.length +
-                            (postsProvider.hasMore ? 1 : 0),
+                          (postsProvider.isLoadingMore ? 1 : 0),
                         itemBuilder: (context, index) {
                           if (index >= postsProvider.posts.length) {
                             return const Padding(
