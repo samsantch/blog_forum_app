@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../logic/posts_provider.dart';
-import '../../data/models/post_model.dart';
 import '../../../../core/widgets/app_text_field.dart';
 import '../../../../core/widgets/app_button.dart';
 
@@ -21,12 +20,15 @@ class _EditPostScreenState extends State<EditPostScreen> {
   late final TextEditingController _titleController;
   late final TextEditingController _contentController;
   List<XFile> _newImages = [];
+  final Set<String> _imagesToDelete = {};
 
   @override
   void initState() {
     super.initState();
-    final post =
-        context.read<PostsProvider>().posts.firstWhere((p) => p.id == widget.postId,
+    final post = context
+        .read<PostsProvider>()
+        .posts
+        .firstWhere((p) => p.id == widget.postId,
             orElse: () => context.read<PostsProvider>().selectedPost!);
 
     _titleController = TextEditingController(text: post.title);
@@ -43,11 +45,14 @@ class _EditPostScreenState extends State<EditPostScreen> {
     }
   }
 
-  Future<void> _handleDeleteExistingImage(String imageId) async {
-    await context.read<PostsProvider>().deletePostImage(
-          postId: widget.postId,
-          imageId: imageId,
-        );
+  void _toggleImageForDeletion(String imageId) {
+    setState(() {
+      if (_imagesToDelete.contains(imageId)) {
+        _imagesToDelete.remove(imageId);
+      } else {
+        _imagesToDelete.add(imageId);
+      }
+    });
   }
 
   Future<void> _handleSave() async {
@@ -59,6 +64,13 @@ class _EditPostScreenState extends State<EditPostScreen> {
       content: _contentController.text.trim(),
     );
     if (!success) return;
+
+    for (final imageId in _imagesToDelete) {
+      await postsProvider.deletePostImage(
+        postId: widget.postId,
+        imageId: imageId,
+      );
+    }
 
     if (_newImages.isNotEmpty) {
       await postsProvider.addImagesToPost(
@@ -102,6 +114,14 @@ class _EditPostScreenState extends State<EditPostScreen> {
                 child: Text('Existing images',
                     style: Theme.of(context).textTheme.labelLarge),
               ),
+              const SizedBox(height: 4),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Tap × to mark for removal. Changes only apply after Save.',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
+              ),
               const SizedBox(height: 8),
               SizedBox(
                 height: 90,
@@ -110,30 +130,36 @@ class _EditPostScreenState extends State<EditPostScreen> {
                   itemCount: post.images.length,
                   itemBuilder: (context, index) {
                     final image = post.images[index];
+                    final marked = _imagesToDelete.contains(image.id);
                     return Padding(
                       padding: const EdgeInsets.only(right: 8),
                       child: Stack(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              image.imageUrl,
-                              width: 90,
-                              height: 90,
-                              fit: BoxFit.cover,
+                          Opacity(
+                            opacity: marked ? 0.3 : 1.0,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Image.network(
+                                image.imageUrl,
+                                width: 90,
+                                height: 90,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                           Positioned(
                             top: 2,
                             right: 2,
                             child: GestureDetector(
-                              onTap: () =>
-                                  _handleDeleteExistingImage(image.id),
-                              child: const CircleAvatar(
+                              onTap: () => _toggleImageForDeletion(image.id),
+                              child: CircleAvatar(
                                 radius: 12,
                                 backgroundColor: Colors.black54,
-                                child: Icon(Icons.close,
-                                    size: 14, color: Colors.white),
+                                child: Icon(
+                                  marked ? Icons.undo : Icons.close,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
                               ),
                             ),
                           ),

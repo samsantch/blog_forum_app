@@ -20,6 +20,7 @@ class CommentTile extends StatefulWidget {
 class _CommentTileState extends State<CommentTile> {
   bool _isEditing = false;
   late final TextEditingController _editController;
+  final Set<String> _imagesToDelete = {};
 
   @override
   void initState() {
@@ -33,13 +34,37 @@ class _CommentTileState extends State<CommentTile> {
     super.dispose();
   }
 
+  void _toggleImageForDeletion(String imageId) {
+    setState(() {
+      if (_imagesToDelete.contains(imageId)) {
+        _imagesToDelete.remove(imageId);
+      } else {
+        _imagesToDelete.add(imageId);
+      }
+    });
+  }
+
   Future<void> _handleSaveEdit() async {
-    final success = await context.read<CommentsProvider>().updateComment(
-          commentId: widget.comment.id,
-          content: _editController.text.trim(),
-        );
-    if (success && mounted) {
-      setState(() => _isEditing = false);
+    final commentsProvider = context.read<CommentsProvider>();
+
+    final success = await commentsProvider.updateComment(
+      commentId: widget.comment.id,
+      content: _editController.text.trim(),
+    );
+    if (!success) return;
+
+    for (final imageId in _imagesToDelete) {
+      await commentsProvider.deleteCommentImage(
+        commentId: widget.comment.id,
+        imageId: imageId,
+      );
+    }
+
+    if (mounted) {
+      setState(() {
+        _imagesToDelete.clear();
+        _isEditing = false;
+      });
     }
   }
 
@@ -79,13 +104,6 @@ class _CommentTileState extends State<CommentTile> {
     }
   }
 
-  Future<void> _handleDeleteImage(String imageId) async {
-    await context.read<CommentsProvider>().deleteCommentImage(
-          commentId: widget.comment.id,
-          imageId: imageId,
-        );
-  }
-
   @override
   Widget build(BuildContext context) {
     return ListTile(
@@ -106,17 +124,21 @@ class _CommentTileState extends State<CommentTile> {
                   itemCount: widget.comment.images.length,
                   itemBuilder: (context, index) {
                     final image = widget.comment.images[index];
+                    final marked = _imagesToDelete.contains(image.id);
                     return Padding(
                       padding: const EdgeInsets.only(right: 6),
                       child: Stack(
                         children: [
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(6),
-                            child: Image.network(
-                              image.imageUrl,
-                              width: 60,
-                              height: 60,
-                              fit: BoxFit.cover,
+                          Opacity(
+                            opacity: marked ? 0.3 : 1.0,
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Image.network(
+                                image.imageUrl,
+                                width: 60,
+                                height: 60,
+                                fit: BoxFit.cover,
+                              ),
                             ),
                           ),
                           if (widget.isAuthor && _isEditing)
@@ -124,12 +146,13 @@ class _CommentTileState extends State<CommentTile> {
                               top: 0,
                               right: 0,
                               child: GestureDetector(
-                                onTap: () => _handleDeleteImage(image.id),
-                                child: const CircleAvatar(
+                                onTap: () =>
+                                    _toggleImageForDeletion(image.id),
+                                child: CircleAvatar(
                                   radius: 10,
                                   backgroundColor: Colors.black54,
                                   child: Icon(
-                                    Icons.close,
+                                    marked ? Icons.undo : Icons.close,
                                     size: 12,
                                     color: Colors.white,
                                   ),
@@ -156,6 +179,7 @@ class _CommentTileState extends State<CommentTile> {
                       onPressed: () {
                         setState(() {
                           _editController.text = widget.comment.content;
+                          _imagesToDelete.clear();
                           _isEditing = false;
                         });
                       },
